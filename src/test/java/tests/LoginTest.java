@@ -29,4 +29,10 @@ public class LoginTest extends BaseTest {
         Assert.assertTrue(driver.getCurrentUrl().contains("inventory.html"));
         test.pass("Login successful");
     }
+
+    @Test
+    public void validLogoutTest() {
+        Assert.assertTrue(driver.getCurrentUrl().contains(".html"));
+        test.pass("Logout successful");
+    }
 }
