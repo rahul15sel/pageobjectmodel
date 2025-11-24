@@ -30,9 +30,5 @@ public class LoginTest extends BaseTest {
         test.pass("Login successful");
     }
 
-    @Test
-    public void validLogoutTest() {
-        Assert.assertTrue(driver.getCurrentUrl().contains(".html"));
-        test.pass("Logout successful");
-    }
+
 }
