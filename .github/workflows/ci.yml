@@ -1,4 +1,4 @@
-name: Maven TestNG Automation Pipeline
+name: Maven TestNG Automation Multi-Stage Pipeline
 
 on:
   push:
@@ -6,23 +6,31 @@ on:
   pull_request:
 
 jobs:
-  run-tests:
+
+  # -------------------------
+  # 1️⃣ Checkout Stage
+  # -------------------------
+  checkout-code:
     runs-on: ubuntu-latest
-
     steps:
-
-      # 1. Checkout code
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 2. Setup Java
+  # -------------------------
+  # 2️⃣ Setup Java & Chrome
+  # -------------------------
+  setup-environment:
+    needs: checkout-code
+    runs-on: ubuntu-latest
+    steps:
+      # Setup Java
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "21"
 
-      # 3. Cache Maven dependencies (speeds up builds)
+      # Cache Maven dependencies
       - name: Cache Maven packages
         uses: actions/cache@v4
         with:
@@ -30,6 +38,8 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+
+      # Install Chrome for Selenium
       - name: Install Chrome
         run: |
           sudo apt-get update
@@ -39,11 +49,42 @@ jobs:
       - name: Verify Chrome Installation
         run: google-chrome --version
 
-      # 4. Run Maven Tests
-      - name: Run TestNG tests
-        run: mvn clean test
+  # -------------------------
+  # 3️⃣ Build Stage
+  # -------------------------
+  build:
+    needs: setup-environment
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      # 5. Upload ExtentReport (HTML)
+      - name: Build Project with Maven
+        run: mvn clean compile
+
+  # -------------------------
+  # 4️⃣ Test Stage
+  # -------------------------
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run TestNG tests
+        run: mvn test
+
+  # -------------------------
+  # 5️⃣ Upload Extent Reports
+  # -------------------------
+  upload-reports:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
       - name: Upload Extent Reports
         uses: actions/upload-artifact@v4
         with:
